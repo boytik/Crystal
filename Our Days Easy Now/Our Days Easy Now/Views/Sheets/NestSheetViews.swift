@@ -16,6 +16,7 @@ struct WhoDidSheet: View {
     @State private var tinyNote: String = ""
     @State private var loggedSoulId: UUID?
     @State private var showSuccess: Bool = false
+    @State private var isLogging: Bool = false  // Prevents double-tap
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -24,7 +25,7 @@ struct WhoDidSheet: View {
                 NestPalette.cradleDark.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(alignment: .center, spacing: 24) {
                         // Deed header
                         deedHeader
 
@@ -39,8 +40,10 @@ struct WhoDidSheet: View {
 
                         Spacer(minLength: 20)
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(20)
                 }
+                .scrollDismissesKeyboard(.interactively)
 
                 // Success overlay
                 if showSuccess {
@@ -62,9 +65,7 @@ struct WhoDidSheet: View {
 
     private var deedHeader: some View {
         VStack(spacing: 8) {
-            Image(systemName: deed.deedIcon)
-                .font(.system(size: 36))
-                .foregroundColor(NestPalette.hearthGold)
+            WhoDidAnimatedIcon(systemName: deed.deedIcon)
 
             Text(deed.deedName)
                 .font(.title3.weight(.bold))
@@ -77,10 +78,11 @@ struct WhoDidSheet: View {
     }
 
     private var memberGrid: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .center, spacing: 10) {
             Text("Choose who")
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(NestPalette.duskWhisper)
+                .frame(maxWidth: .infinity)
 
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
@@ -119,10 +121,11 @@ struct WhoDidSheet: View {
     }
 
     private var timePicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .center, spacing: 10) {
             Text("When")
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(NestPalette.duskWhisper)
+                .frame(maxWidth: .infinity)
 
             HStack(spacing: 0) {
                 ForEach(WhoDidTimeMode.allCases) { mode in
@@ -131,7 +134,7 @@ struct WhoDidSheet: View {
                             timeMode = mode
                         }
                     } label: {
-                        Text(mode.rawValue)
+                        Text(NSLocalizedString(mode.rawValue, comment: ""))
                             .font(.caption.weight(.semibold))
                             .foregroundColor(
                                 timeMode == mode ? NestPalette.emberNight : NestPalette.duskWhisper
@@ -159,15 +162,17 @@ struct WhoDidSheet: View {
     }
 
     private var noteField: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .center, spacing: 8) {
             Text("Quick note (optional)")
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(NestPalette.duskWhisper)
+                .frame(maxWidth: .infinity)
 
             TextField("e.g. before bedtime, quick one...", text: $tinyNote)
                 .font(.subheadline)
                 .foregroundColor(NestPalette.snowfall)
                 .padding(12)
+                .frame(maxWidth: .infinity)
                 .background(NestPalette.blanketCharcoal)
                 .cornerRadius(10)
                 .overlay(
@@ -175,9 +180,11 @@ struct WhoDidSheet: View {
                         .stroke(NestPalette.moonThread, lineWidth: 0.5)
                 )
 
-            Text("You can add details later")
-                .font(.caption2)
-                .foregroundColor(NestPalette.shadowMurmur)
+            Text(String(localized: "You can write your thoughts here and mark the value of the contribution"))
+                .font(.caption)
+                .foregroundColor(NestPalette.duskWhisper)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
         }
     }
 
@@ -196,6 +203,9 @@ struct WhoDidSheet: View {
     }
 
     private func confirmLog(soul: KinSoul) {
+        guard !isLogging else { return }
+        isLogging = true
+        NestHaptics.mediumTap()
         let time = timeMode == .now ? Date() : customTime
         let note = tinyNote.trimmingCharacters(in: .whitespaces)
 
@@ -206,17 +216,37 @@ struct WhoDidSheet: View {
             tinyNote: note.isEmpty ? nil : note
         )
         vault.logEmberMoment(moment)
+        NestSounds.playLog()
 
         loggedSoulId = soul.id
         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
             showSuccess = true
         }
 
-        coordinator.showMomentLogged(deedName: deed.deedName, kinName: soul.nestName)
+        coordinator.showUndoToast(moment: moment, deedName: deed.deedName)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             dismiss()
         }
+    }
+}
+
+private struct WhoDidAnimatedIcon: View {
+    let systemName: String
+    @State private var scale: CGFloat = 1.0
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
+    var body: some View {
+        Image(systemName: systemName)
+            .font(.system(size: 36))
+            .foregroundColor(NestPalette.hearthGold)
+            .scaleEffect(reduceMotion ? 1.0 : scale)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                    scale = 1.12
+                }
+            }
     }
 }
 
@@ -335,6 +365,7 @@ struct MomentDetailSheet: View {
                         Spacer(minLength: 20)
                     }
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle("Moment Details")
             .navigationBarTitleDisplayMode(.inline)
@@ -431,6 +462,7 @@ struct AddKinSoulSheet: View {
                     }
                     .padding(20)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle("New Member")
             .navigationBarTitleDisplayMode(.inline)
@@ -453,7 +485,7 @@ struct AddKinSoulSheet: View {
                     VStack(spacing: 4) {
                         Image(systemName: role.spiritIcon)
                             .font(.caption)
-                        Text(role.rawValue)
+                        Text(NSLocalizedString(role.rawValue, comment: ""))
                             .font(.caption2.weight(.medium))
                     }
                     .foregroundColor(
@@ -543,7 +575,7 @@ struct EditKinSoulSheet: View {
                                     Button {
                                         selectedRole = role
                                     } label: {
-                                        Text(role.rawValue)
+                                        Text(NSLocalizedString(role.rawValue, comment: ""))
                                             .font(.caption2.weight(.medium))
                                             .foregroundColor(
                                                 selectedRole == role ? NestPalette.emberNight : NestPalette.duskWhisper
@@ -581,6 +613,7 @@ struct EditKinSoulSheet: View {
                     }
                     .padding(20)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle("Edit Member")
             .navigationBarTitleDisplayMode(.inline)
@@ -673,7 +706,7 @@ struct AddDeedSheet: View {
                                         HStack(spacing: 4) {
                                             Image(systemName: domain.tinyIcon)
                                                 .font(.caption2)
-                                            Text(domain.rawValue)
+                                            Text(NSLocalizedString(domain.rawValue, comment: ""))
                                                 .font(.caption.weight(.medium))
                                         }
                                         .foregroundColor(
@@ -702,6 +735,7 @@ struct AddDeedSheet: View {
                     }
                     .padding(20)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle("New Action")
             .navigationBarTitleDisplayMode(.inline)
@@ -840,7 +874,7 @@ struct EditDeedSheet: View {
                                     Button {
                                         selectedDomain = domain
                                     } label: {
-                                        Text(domain.rawValue)
+                                        Text(NSLocalizedString(domain.rawValue, comment: ""))
                                             .font(.caption.weight(.medium))
                                             .foregroundColor(
                                                 selectedDomain == domain ? NestPalette.emberNight : NestPalette.duskWhisper
@@ -878,6 +912,7 @@ struct EditDeedSheet: View {
                     }
                     .padding(20)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle("Edit Action")
             .navigationBarTitleDisplayMode(.inline)

@@ -6,6 +6,7 @@ import SwiftUI
 
 struct EmberSplashView: View {
     let onFinished: () -> Void
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     // MARK: Animation States
 
@@ -65,8 +66,8 @@ struct EmberSplashView: View {
             }
             .padding(.horizontal, 32)
 
-            // Spark burst overlay
-            if sparkBurst {
+            // Spark burst overlay (skip when Reduce Motion)
+            if sparkBurst && !reduceMotion {
                 sparkBurstOverlay
                     .transition(.opacity)
             }
@@ -220,8 +221,8 @@ struct EmberSplashView: View {
         let angle = Double(index) * (360.0 / 12.0) * .pi / 180
         let radius: CGFloat = sparkBurst ? 120 : 0
         return CGSize(
-            width: cos(angle) * radius,
-            height: sin(angle) * radius
+            width: CGFloat(cos(angle)) * radius,
+            height: CGFloat(sin(angle)) * radius
         )
     }
 

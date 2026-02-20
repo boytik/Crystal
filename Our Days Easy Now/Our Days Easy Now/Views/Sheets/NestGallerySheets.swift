@@ -421,7 +421,7 @@ struct StatsDashboardSheet: View {
                 .font(.title3.weight(.bold))
                 .foregroundColor(NestPalette.snowfall)
 
-            Text(vault.sparkLedger.clanLevel.rawValue)
+            Text(NSLocalizedString(vault.sparkLedger.clanLevel.rawValue, comment: ""))
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(NestPalette.hearthGold)
         }

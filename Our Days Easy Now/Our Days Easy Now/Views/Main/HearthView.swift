@@ -9,6 +9,7 @@ import SwiftUI
 struct HearthView: View {
     @StateObject private var vm = HearthViewModel()
     @EnvironmentObject var coordinator: NestCoordinator
+    @State private var isQuickActionsExpanded = false
 
     var body: some View {
         NavigationStack {
@@ -91,7 +92,7 @@ struct HearthView: View {
                     Button {
                         vm.switchDay(day)
                     } label: {
-                        Text(day.rawValue)
+                        Text(NSLocalizedString(day.rawValue, comment: ""))
                             .font(.subheadline.weight(.semibold))
                             .foregroundColor(
                                 vm.selectedDay == day ? NestPalette.emberNight : NestPalette.duskWhisper
@@ -164,7 +165,12 @@ struct HearthView: View {
     // MARK: - Deed Grid
 
     private var deedGrid: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let deedsToShow = isQuickActionsExpanded
+            ? Array(vm.quickDeeds)
+            : Array(vm.quickDeeds.prefix(4))
+        let canExpand = vm.quickDeeds.count > 4
+
+        return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Quick Actions")
                     .font(.headline.weight(.bold))
@@ -172,12 +178,32 @@ struct HearthView: View {
 
                 Spacer()
 
-                Button {
-                    coordinator.openAddCustomDeed()
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title3)
-                        .foregroundColor(NestPalette.hearthGold)
+                HStack(spacing: 4) {
+                    if canExpand {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                isQuickActionsExpanded.toggle()
+                            }
+                        } label: {
+                            Image(systemName: isQuickActionsExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(NestPalette.hearthGold)
+                                .contentShape(Rectangle())
+                                .frame(minWidth: 44, minHeight: 44)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    Button {
+                        coordinator.openAddCustomDeed()
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(NestPalette.hearthGold)
+                            .contentShape(Rectangle())
+                            .frame(minWidth: 44, minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -185,7 +211,7 @@ struct HearthView: View {
                 GridItem(.flexible(), spacing: 12),
                 GridItem(.flexible(), spacing: 12),
             ], spacing: 12) {
-                ForEach(vm.quickDeeds) { item in
+                ForEach(deedsToShow) { item in
                     deedButton(item)
                 }
             }
@@ -224,7 +250,7 @@ struct HearthView: View {
                     .lineLimit(1)
 
                 // Domain dot
-                Text(item.deed.deedDomain.rawValue)
+                Text(NSLocalizedString(item.deed.deedDomain.rawValue, comment: ""))
                     .font(.system(size: 9, weight: .medium))
                     .foregroundColor(NestPalette.shadowMurmur)
             }
@@ -248,6 +274,8 @@ struct HearthView: View {
             )
         }
         .buttonStyle(DeedTapStyle())
+        .accessibilityLabel("\(item.deed.deedName), \(item.todayCount) logged today")
+        .accessibilityHint("Double tap to log who did this")
     }
 
     // MARK: - Nudge Card
@@ -432,7 +460,7 @@ struct HearthView: View {
             // Clan level
             sparkBubble(
                 emoji: vm.sparkSnapshot.clanEmoji,
-                label: vm.sparkSnapshot.clanLevel.rawValue,
+                label: NSLocalizedString(vm.sparkSnapshot.clanLevel.rawValue, comment: ""),
                 valueColor: NestPalette.hearthGold
             )
 

@@ -194,11 +194,13 @@ final class HearthViewModel: ObservableObject {
     // MARK: - Actions
 
     func tapDeed(_ deed: HearthDeed) {
+        NestHaptics.lightTap()
         activeDeed = deed
         showWhoDid = true
     }
 
     func confirmQuickLog(deed: HearthDeed, soul: KinSoul, time: Date = Date(), note: String? = nil) {
+        NestHaptics.mediumTap()
         let moment = EmberMoment(
             deedId: deed.id,
             kinSoulId: soul.id,
@@ -211,6 +213,8 @@ final class HearthViewModel: ObservableObject {
     }
 
     func toggleGratitude(momentId: UUID, fromKinId: UUID) {
+        NestHaptics.success()
+        NestSounds.playSuccess()
         vault.toggleGratitude(momentId: momentId, fromKinId: fromKinId)
     }
 

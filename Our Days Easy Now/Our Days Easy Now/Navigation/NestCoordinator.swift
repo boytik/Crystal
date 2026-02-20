@@ -32,6 +32,7 @@ final class NestCoordinator: ObservableObject {
     // MARK: Undo Support
 
     @Published var undoPayload: UndoEmberPayload?
+    @Published var badgeConfetti: NestBadge?
 
     private var toastDismissTask: Task<Void, Never>?
 
@@ -141,11 +142,20 @@ final class NestCoordinator: ObservableObject {
     }
 
     func showBadgeUnlocked(badge: NestBadge) {
+        NestHaptics.success()
+        NestSounds.playSuccess()
         showToast(EmberToast(
             icon: "trophy.fill",
             message: "\(badge.badgeIcon) \(badge.badgeTitle) unlocked!",
             style: .achievement
         ))
+        withAnimation(.easeOut(duration: 0.3)) {
+            badgeConfetti = badge
+        }
+        Task {
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            await MainActor.run { badgeConfetti = nil }
+        }
     }
 
     func showUndoToast(moment: EmberMoment, deedName: String) {

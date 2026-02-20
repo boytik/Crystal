@@ -61,7 +61,10 @@ struct KinOnboardingView: View {
     // MARK: - Step 0: Welcome
 
     private var welcomeStep: some View {
-        OnboardingWelcomeStep(onNext: { advanceStep() })
+        OnboardingWelcomeStep(
+            onNext: { advanceStep() },
+            onSkip: { skipOnboarding() }
+        )
     }
 
     // MARK: - Step 1: Team Setup
@@ -111,6 +114,11 @@ struct KinOnboardingView: View {
         }
     }
 
+    private func skipOnboarding() {
+        HearthVault.shared.hasCompletedOnboarding = true
+        onComplete()
+    }
+
     private func finalizeOnboarding() {
         let vault = HearthVault.shared
 
@@ -136,6 +144,7 @@ struct KinOnboardingView: View {
 
 struct OnboardingWelcomeStep: View {
     let onNext: () -> Void
+    var onSkip: (() -> Void)? = nil
 
     @State private var iconScale: CGFloat = 0.5
     @State private var iconOpacity: Double = 0
@@ -197,14 +206,25 @@ struct OnboardingWelcomeStep: View {
             Spacer()
 
             // CTA
-            Button(action: onNext) {
-                HStack {
-                    Text("Get Started")
-                    Image(systemName: "arrow.right")
+            VStack(spacing: 12) {
+                Button(action: onNext) {
+                    HStack {
+                        Text("Get Started")
+                        Image(systemName: "arrow.right")
+                    }
+                }
+                .buttonStyle(HearthButtonStyle())
+                .opacity(ctaOpacity)
+
+                if let onSkip {
+                    Button(action: onSkip) {
+                        Text("Skip for now")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(NestPalette.duskWhisper)
+                    }
+                    .opacity(ctaOpacity)
                 }
             }
-            .buttonStyle(HearthButtonStyle())
-            .opacity(ctaOpacity)
             .padding(.bottom, 48)
         }
         .padding(.horizontal, 24)
@@ -304,6 +324,7 @@ struct OnboardingTeamStep: View {
                 }
                 .padding(.horizontal, 24)
             }
+            .scrollDismissesKeyboard(.interactively)
 
             Spacer()
 
@@ -383,7 +404,10 @@ struct OnboardingTeamStep: View {
             if draftSouls.count > 1 {
                 Button {
                     withAnimation(.easeInOut(duration: 0.3)) {
-                        draftSouls.remove(at: index)
+                        let i = index
+                        if draftSouls.indices.contains(i) {
+                            draftSouls.remove(at: i)
+                        }
                     }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -405,7 +429,7 @@ struct OnboardingTeamStep: View {
         Button {
             draftSouls[index].kinRole = role
         } label: {
-            Text(role.rawValue)
+            Text(NSLocalizedString(role.rawValue, comment: ""))
                 .font(.caption2.weight(.medium))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -516,6 +540,7 @@ struct OnboardingDeedsStep: View {
                     .foregroundColor(NestPalette.shadowMurmur)
                     .padding(.top, 10)
             }
+            .scrollDismissesKeyboard(.interactively)
 
             Spacer()
 
@@ -570,7 +595,7 @@ struct OnboardingDeedsStep: View {
                     .foregroundColor(isSelected ? NestPalette.snowfall : NestPalette.duskWhisper)
 
                 // Domain tag
-                Text(deed.deedDomain.rawValue)
+                Text(NSLocalizedString(deed.deedDomain.rawValue, comment: ""))
                     .font(.system(size: 9, weight: .medium))
                     .foregroundColor(NestPalette.shadowMurmur)
                     .padding(.horizontal, 6)
@@ -778,7 +803,10 @@ struct OnboardingFirstTapStep: View {
     private func confettiOffset(index: Int) -> CGSize {
         let angle = Double(index) * (360.0 / 8.0) * .pi / 180
         let radius: CGFloat = confettiVisible ? 80 : 0
-        return CGSize(width: cos(angle) * radius, height: sin(angle) * radius)
+        return CGSize(
+            width: CGFloat(cos(angle)) * radius,
+            height: CGFloat(sin(angle)) * radius
+        )
     }
 
     private func logFirstMoment(soul: KinSoul) {

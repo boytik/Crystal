@@ -27,10 +27,32 @@ struct OurDaysEasyNowApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                NestPalette.emberNight.ignoresSafeArea()
+            AppRootView(
+                isSplashComplete: $isSplashComplete,
+                isOnboardingComplete: $isOnboardingComplete,
+                nestCoordinator: nestCoordinator
+            )
+        }
+    }
+}
 
-                if !isSplashComplete {
+// MARK: - App Root (observes vault for load errors)
+
+private struct AppRootView: View {
+    @ObservedObject private var vault = HearthVault.shared
+    @Binding var isSplashComplete: Bool
+    @Binding var isOnboardingComplete: Bool
+    @ObservedObject var nestCoordinator: NestCoordinator
+
+    var body: some View {
+        ZStack {
+            NestPalette.emberNight.ignoresSafeArea()
+
+            if vault.loadError != nil {
+                    DataLoadErrorView(onRetry: {
+                        HearthVault.shared.retryLoad()
+                    })
+                } else if !isSplashComplete {
                     EmberSplashView(onFinished: {
                         withAnimation(.easeInOut(duration: 0.6)) {
                             isSplashComplete = true
@@ -49,12 +71,14 @@ struct OurDaysEasyNowApp: App {
                     NestTabShell()
                         .environmentObject(nestCoordinator)
                         .transition(.opacity)
+                        .onAppear { setupBadgeCallback(coordinator: nestCoordinator) }
                 }
-            }
-            .animation(.easeInOut(duration: 0.5), value: isSplashComplete)
-            .animation(.easeInOut(duration: 0.5), value: isOnboardingComplete)
-            .preferredColorScheme(.dark)
         }
+        .animation(.easeInOut(duration: 0.5), value: isSplashComplete)
+        .animation(.easeInOut(duration: 0.5), value: isOnboardingComplete)
+        .animation(.easeInOut(duration: 0.3), value: vault.loadError != nil)
+        .preferredColorScheme(.dark)
+        .dynamicTypeSize(.xSmall ... .accessibility2)
     }
 }
 
@@ -63,8 +87,10 @@ struct OurDaysEasyNowApp: App {
 struct NestTabShell: View {
     @EnvironmentObject var coordinator: NestCoordinator
     @State private var chosenHearth: NestTab = .hearth
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     var body: some View {
+        ZStack {
         TabView(selection: $chosenHearth) {
             HearthView()
                 .tabItem {
@@ -94,6 +120,14 @@ struct NestTabShell: View {
         .onAppear {
             configureTabBarAppearance()
         }
+
+            // Badge confetti overlay
+            if let badge = coordinator.badgeConfetti, !reduceMotion {
+                BadgeConfettiOverlay(badge: badge)
+                    .allowsHitTesting(false)
+            }
+        }
+        .nestSheetRouter()
     }
 
     private func configureTabBarAppearance() {
@@ -115,6 +149,14 @@ struct NestTabShell: View {
 
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+}
+
+// MARK: - Badge Unlock Callback
+
+private func setupBadgeCallback(coordinator: NestCoordinator) {
+    HearthVault.shared.onBadgeUnlocked = { badge in
+        coordinator.showBadgeUnlocked(badge: badge)
     }
 }
 

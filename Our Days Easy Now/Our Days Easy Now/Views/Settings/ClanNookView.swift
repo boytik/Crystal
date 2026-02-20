@@ -9,6 +9,7 @@ import SwiftUI
 struct ClanNookView: View {
     @StateObject private var vm = ClanNookViewModel()
     @EnvironmentObject var coordinator: NestCoordinator
+    @State private var showBadgeGallery = false
 
     var body: some View {
         NavigationStack {
@@ -26,6 +27,9 @@ struct ClanNookView: View {
         .nestAlerts()
         .sheet(isPresented: $vm.showShareSheet) {
             ShareSheetWrapper(text: vm.exportText)
+        }
+        .sheet(isPresented: $showBadgeGallery) {
+            BadgeGallerySheet()
         }
         .onAppear { vm.loadClan() }
     }
@@ -107,14 +111,14 @@ struct ClanNookView: View {
 
                 HStack(spacing: 6) {
                     Text(vm.clanStats.clanEmoji)
-                        .font(.caption)
+                        .font(.subheadline)
                     Text(vm.clanStats.clanLevel)
-                        .font(.caption.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundColor(NestPalette.hearthGold)
                 }
 
                 Text("\(vm.activeKin.count) members · \(vm.clanStats.totalMoments) moments")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(NestPalette.shadowMurmur)
             }
 
@@ -139,7 +143,10 @@ struct ClanNookView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
                             .foregroundColor(NestPalette.hearthGold)
+                            .contentShape(Rectangle())
+                            .frame(minWidth: 44, minHeight: 44)
                     }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -169,12 +176,12 @@ struct ClanNookView: View {
                             archivedMemberRow(soul)
                         }
                     }
-                } label: {
+                }                 label: {
                     HStack(spacing: 6) {
                         Image(systemName: "archivebox.fill")
-                            .font(.caption)
+                            .font(.subheadline)
                         Text("Archived (\(vm.archivedKin.count))")
-                            .font(.caption.weight(.medium))
+                            .font(.subheadline.weight(.medium))
                     }
                     .foregroundColor(NestPalette.shadowMurmur)
                 }
@@ -194,19 +201,19 @@ struct ClanNookView: View {
                     .cornerRadius(20)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(soul.nestName)
-                        .font(.subheadline.weight(.semibold))
+                Text(soul.nestName)
+                    .font(.body.weight(.semibold))
                         .foregroundColor(NestPalette.snowfall)
 
-                    Text(soul.kinRole.rawValue)
-                        .font(.caption2)
+                    Text(NSLocalizedString(soul.kinRole.rawValue, comment: ""))
+                        .font(.caption)
                         .foregroundColor(NestPalette.shadowMurmur)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(NestPalette.moonThread)
             }
             .padding(.horizontal, 14)
@@ -232,7 +239,7 @@ struct ClanNookView: View {
                 .opacity(0.6)
 
             Text(soul.nestName)
-                .font(.caption.weight(.medium))
+                .font(.subheadline.weight(.medium))
                 .foregroundColor(NestPalette.shadowMurmur)
 
             Spacer()
@@ -241,7 +248,7 @@ struct ClanNookView: View {
                 vm.restoreKinSoul(soul)
             } label: {
                 Text("Restore")
-                    .font(.caption2.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundColor(NestPalette.harmonyMoss)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -268,7 +275,10 @@ struct ClanNookView: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
                         .foregroundColor(NestPalette.hearthGold)
+                        .contentShape(Rectangle())
+                        .frame(minWidth: 44, minHeight: 44)
                 }
+                .buttonStyle(.plain)
             }
 
             // Active deeds grid
@@ -297,9 +307,9 @@ struct ClanNookView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "archivebox.fill")
-                            .font(.caption)
+                            .font(.subheadline)
                         Text("Archived (\(vm.archivedDeeds.count))")
-                            .font(.caption.weight(.medium))
+                            .font(.subheadline.weight(.medium))
                     }
                     .foregroundColor(NestPalette.shadowMurmur)
                 }
@@ -313,11 +323,11 @@ struct ClanNookView: View {
         } label: {
             VStack(spacing: 5) {
                 Image(systemName: deed.deedIcon)
-                    .font(.caption.bold())
+                    .font(.subheadline.bold())
                     .foregroundColor(NestPalette.hearthGold)
 
                 Text(deed.deedName)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(NestPalette.snowfall)
                     .lineLimit(1)
             }
@@ -342,9 +352,9 @@ struct ClanNookView: View {
     private func archivedDeedChip(_ deed: HearthDeed) -> some View {
         HStack(spacing: 4) {
             Image(systemName: deed.deedIcon)
-                .font(.system(size: 9))
+                .font(.caption)
             Text(deed.deedName)
-                .font(.system(size: 9, weight: .medium))
+                .font(.caption.weight(.medium))
                 .lineLimit(1)
         }
         .foregroundColor(NestPalette.shadowMurmur)
@@ -370,7 +380,7 @@ struct ClanNookView: View {
                     coordinator.openStatsDashboard()
                 } label: {
                     Text("Details")
-                        .font(.caption.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundColor(NestPalette.hearthGold)
                 }
             }
@@ -395,10 +405,10 @@ struct ClanNookView: View {
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text("MVP")
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.caption.weight(.medium))
                             .foregroundColor(NestPalette.shadowMurmur)
                         Text(vm.clanStats.topMemberName)
-                            .font(.caption.weight(.bold))
+                            .font(.subheadline.weight(.bold))
                             .foregroundColor(NestPalette.snowfall)
                             .lineLimit(1)
                     }
@@ -415,10 +425,10 @@ struct ClanNookView: View {
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Top Action")
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.caption.weight(.medium))
                             .foregroundColor(NestPalette.shadowMurmur)
                         Text(vm.clanStats.topDeedName)
-                            .font(.caption.weight(.bold))
+                            .font(.subheadline.weight(.bold))
                             .foregroundColor(NestPalette.snowfall)
                             .lineLimit(1)
                     }
@@ -434,15 +444,15 @@ struct ClanNookView: View {
     private func statCell(icon: String, value: String, label: String, color: Color) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.caption.bold())
+                .font(.subheadline.bold())
                 .foregroundColor(color)
 
             Text(value)
-                .font(.subheadline.bold())
+                .font(.body.bold())
                 .foregroundColor(NestPalette.snowfall)
 
             Text(label)
-                .font(.system(size: 9, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundColor(NestPalette.shadowMurmur)
         }
         .frame(maxWidth: .infinity)
@@ -499,7 +509,7 @@ struct ClanNookView: View {
                     subtitle: "\(vm.clanStats.badgesUnlocked) unlocked",
                     tint: NestPalette.candleAmber
                 ) {
-                    coordinator.openBadgeGallery()
+                    showBadgeGallery = true
                 }
 
                 prefDivider
@@ -532,10 +542,10 @@ struct ClanNookView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.subheadline.weight(.medium))
+                    .font(.body.weight(.medium))
                     .foregroundColor(NestPalette.snowfall)
                 Text(subtitle)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(NestPalette.shadowMurmur)
             }
 
@@ -559,17 +569,17 @@ struct ClanNookView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.subheadline.weight(.medium))
+                        .font(.body.weight(.medium))
                         .foregroundColor(NestPalette.snowfall)
                     Text(subtitle)
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundColor(NestPalette.shadowMurmur)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(NestPalette.moonThread)
             }
             .padding(.horizontal, 14)
@@ -600,10 +610,10 @@ struct ClanNookView: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Reset All Data")
-                            .font(.subheadline.weight(.medium))
+                            .font(.body.weight(.medium))
                             .foregroundColor(NestPalette.nudgeRose)
                         Text("Erase everything and start fresh")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(NestPalette.shadowMurmur)
                     }
 
@@ -623,7 +633,7 @@ struct ClanNookView: View {
             HStack {
                 Spacer()
                 Text("Our Days: Easy Now · v1.0")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.caption)
                     .foregroundColor(NestPalette.shadowMurmur)
                 Spacer()
             }
@@ -635,7 +645,7 @@ struct ClanNookView: View {
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
-            .font(.headline.weight(.bold))
+            .font(.title3.weight(.bold))
             .foregroundColor(NestPalette.snowfall)
     }
 

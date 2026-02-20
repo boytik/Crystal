@@ -104,6 +104,7 @@ extension Color {
 
 struct EmberNightBackground: View {
     @State private var shimmerPhase: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     var body: some View {
         ZStack {
@@ -133,10 +134,12 @@ struct EmberNightBackground: View {
             )
             .ignoresSafeArea()
 
-            // Floating particles effect
-            EmberParticlesView()
-                .ignoresSafeArea()
-                .opacity(0.6)
+            // Floating particles effect (hidden when Reduce Motion is on)
+            if !reduceMotion {
+                EmberParticlesView()
+                    .ignoresSafeArea()
+                    .opacity(0.6)
+            }
         }
     }
 }

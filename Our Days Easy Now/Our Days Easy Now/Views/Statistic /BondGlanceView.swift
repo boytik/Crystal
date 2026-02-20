@@ -92,7 +92,7 @@ struct BondGlanceView: View {
                 Button {
                     vm.switchPeriod(p)
                 } label: {
-                    Text(p.rawValue)
+                    Text(NSLocalizedString(p.rawValue, comment: ""))
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(
                             vm.period == p ? NestPalette.emberNight : NestPalette.duskWhisper
@@ -118,29 +118,33 @@ struct BondGlanceView: View {
     private var statsRow: some View {
         HStack(spacing: 12) {
             miniStat(icon: "flame.fill", value: "\(vm.totalMoments)", label: "Moments", color: NestPalette.hearthGold)
-            miniStat(icon: "heart.fill", value: "\(vm.totalGratitudes)", label: "Thanks", color: NestPalette.bondSpark)
-            miniStat(icon: "star.fill", value: vm.topDeedName.isEmpty ? "—" : vm.topDeedName, label: "Top Action", color: NestPalette.harmonyMoss)
+            miniStat(icon: "heart.fill", value: "\(vm.totalGratitudes)", label: "Thanks", color: NestPalette.bondSpark, animated: true)
+            miniStat(icon: "star.fill", value: vm.topDeedName.isEmpty ? "—" : vm.topDeedName, label: "Top Action", color: NestPalette.harmonyMoss, animated: true)
         }
     }
 
-    private func miniStat(icon: String, value: String, label: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.caption.bold())
-                .foregroundColor(color)
+    private func miniStat(icon: String, value: String, label: String, color: Color, animated: Bool = false) -> some View {
+        VStack(spacing: 8) {
+            if animated {
+                AnimatedStatIcon(systemName: icon, color: color)
+            } else {
+                Image(systemName: icon)
+                    .font(.title3.bold())
+                    .foregroundColor(color)
+            }
 
             Text(value)
-                .font(.subheadline.bold())
+                .font(.body.bold())
                 .foregroundColor(NestPalette.snowfall)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(.system(size: 9, weight: .medium))
-                .foregroundColor(NestPalette.shadowMurmur)
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(NestPalette.duskWhisper)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
         .background(NestPalette.blanketCharcoal)
         .cornerRadius(12)
         .overlay(
@@ -163,7 +167,7 @@ struct BondGlanceView: View {
                         .font(.caption.weight(.semibold))
                         .foregroundColor(NestPalette.shadowMurmur)
 
-                    Text(vm.teamBalance.rawValue)
+                    Text(NSLocalizedString(vm.teamBalance.rawValue, comment: ""))
                         .font(.subheadline.weight(.bold))
                         .foregroundColor(vm.teamBalance.tintColor)
                 }
@@ -200,13 +204,15 @@ struct BondGlanceView: View {
 
                     VStack(spacing: 2) {
                         Text("\(vm.totalMoments)")
-                            .font(.title2.bold())
-                            .foregroundColor(NestPalette.snowfall)
+                            .font(.title.bold())
+                            .foregroundColor(NestPalette.hearthGold)
                         Text("total")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(NestPalette.shadowMurmur)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(NestPalette.candleAmber.opacity(0.9))
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Contributions chart: \(vm.totalMoments) total moments. \(vm.kinSlices.map { "\($0.kinName): \($0.momentCount)" }.joined(separator: ", "))")
 
                 // Legend
                 VStack(alignment: .leading, spacing: 8) {
@@ -215,8 +221,10 @@ struct BondGlanceView: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(4)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .nestCard()
     }
 
@@ -255,23 +263,23 @@ struct BondGlanceView: View {
     }
 
     private func kinLegendRow(_ slice: KinSliceData) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Circle()
                 .fill(NestPalette.kinColor(at: slice.colorSeed))
-                .frame(width: 10, height: 10)
+                .frame(width: 12, height: 12)
 
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
                     Text(slice.kinEmoji)
-                        .font(.caption)
+                        .font(.subheadline)
                     Text(slice.kinName)
-                        .font(.caption.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundColor(NestPalette.snowfall)
                 }
 
                 Text("\(slice.momentCount) · \(Int(slice.percentage * 100))%")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(NestPalette.shadowMurmur)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundColor(NestPalette.hearthGold)
             }
         }
     }
@@ -290,25 +298,26 @@ struct BondGlanceView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .nestCard()
     }
 
     private func deedBarRow(_ item: DeedBarData) -> some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 6) {
             HStack {
                 Image(systemName: item.deedIcon)
-                    .font(.caption2)
+                    .font(.subheadline)
                     .foregroundColor(NestPalette.hearthGold)
-                    .frame(width: 16)
+                    .frame(width: 24)
 
                 Text(item.deedName)
-                    .font(.caption.weight(.medium))
+                    .font(.subheadline.weight(.medium))
                     .foregroundColor(NestPalette.snowfall)
 
                 Spacer()
 
                 Text("\(item.count)")
-                    .font(.caption.bold())
+                    .font(.subheadline.bold())
                     .foregroundColor(NestPalette.hearthGold)
             }
 
@@ -394,6 +403,8 @@ struct BondGlanceView: View {
             }
         }
         .nestCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Daily activity heatmap. \(vm.dailyHeatmap.filter { $0.momentCount > 0 }.count) days with activity")
     }
 
     // MARK: - Spark Progress Card
@@ -403,7 +414,7 @@ struct BondGlanceView: View {
             // Header
             HStack {
                 Text("Clan Progress")
-                    .font(.headline.weight(.bold))
+                    .font(.title3.weight(.bold))
                     .foregroundColor(NestPalette.snowfall)
 
                 Spacer()
@@ -411,11 +422,11 @@ struct BondGlanceView: View {
                 Button {
                     coordinator.openBadgeGallery()
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: "trophy.fill")
-                            .font(.caption2)
+                            .font(.subheadline)
                         Text("Badges")
-                            .font(.caption.weight(.semibold))
+                            .font(.subheadline.weight(.semibold))
                     }
                     .foregroundColor(NestPalette.hearthGold)
                 }
@@ -424,12 +435,12 @@ struct BondGlanceView: View {
             // Level display
             HStack(spacing: 16) {
                 // Current level
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     Text(vm.sparkProgress.clanEmoji)
-                        .font(.system(size: 40))
+                        .font(.system(size: 44))
 
                     Text(vm.sparkProgress.clanName)
-                        .font(.caption.weight(.bold))
+                        .font(.subheadline.weight(.bold))
                         .foregroundColor(NestPalette.hearthGold)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -440,14 +451,14 @@ struct BondGlanceView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     // Progress to next level
                     if let next = vm.sparkProgress.nextLevelName {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 6) {
                             HStack {
                                 Text("Next: \(next)")
-                                    .font(.caption2.weight(.medium))
+                                    .font(.subheadline.weight(.medium))
                                     .foregroundColor(NestPalette.duskWhisper)
                                 Spacer()
                                 Text("\(vm.sparkProgress.sparksNeeded) sparks to go")
-                                    .font(.system(size: 9, weight: .semibold))
+                                    .font(.caption.weight(.semibold))
                                     .foregroundColor(NestPalette.hearthGold)
                             }
 
@@ -497,18 +508,18 @@ struct BondGlanceView: View {
     }
 
     private func sparkMini(icon: String, value: String, label: String, color: Color) -> some View {
-        VStack(spacing: 3) {
-            HStack(spacing: 3) {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 9))
+                    .font(.subheadline)
                     .foregroundColor(color)
                 Text(value)
-                    .font(.caption2.bold())
+                    .font(.subheadline.bold())
                     .foregroundColor(NestPalette.snowfall)
             }
             Text(label)
-                .font(.system(size: 8, weight: .medium))
-                .foregroundColor(NestPalette.shadowMurmur)
+                .font(.caption.weight(.medium))
+                .foregroundColor(NestPalette.duskWhisper)
         }
     }
 
@@ -581,5 +592,27 @@ struct BondGlanceView: View {
             Spacer()
         }
         .padding(.top, 12)
+    }
+}
+
+// MARK: - Animated Stat Icon
+
+private struct AnimatedStatIcon: View {
+    let systemName: String
+    let color: Color
+    @State private var scale: CGFloat = 1.0
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
+    var body: some View {
+        Image(systemName: systemName)
+            .font(.title3.bold())
+            .foregroundColor(color)
+            .scaleEffect(reduceMotion ? 1.0 : scale)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
+                    scale = 1.15
+                }
+            }
     }
 }

@@ -3,6 +3,7 @@
 // Local JSON persistence — no Core Data, no cloud, fully offline
 
 import Foundation
+import Combine
 
 // MARK: - Hearth Vault (Central Data Store)
 
@@ -16,6 +17,10 @@ final class HearthVault: ObservableObject {
     @Published var emberMoments: [EmberMoment] = []
     @Published var sparkLedger: BondSparkLedger = BondSparkLedger()
     @Published var nestPreferences: NestPreferences = NestPreferences()
+    @Published var loadError: String? = nil  // When set, show error screen with Retry
+
+    /// Called when a new badge is unlocked — for toast + confetti
+    var onBadgeUnlocked: ((NestBadge) -> Void)?
 
     // MARK: Onboarding Flag
 
@@ -86,6 +91,7 @@ final class HearthVault: ObservableObject {
             return try decoder.decode([T].self, from: data)
         } catch {
             print("🏠 HearthVault: Failed to load \(fileName): \(error)")
+            DispatchQueue.main.async { self.loadError = "Failed to load data" }
             return nil
         }
     }
@@ -98,8 +104,14 @@ final class HearthVault: ObservableObject {
             return try decoder.decode(T.self, from: data)
         } catch {
             print("🏠 HearthVault: Failed to load \(fileName): \(error)")
+            DispatchQueue.main.async { self.loadError = "Failed to load data" }
             return nil
         }
+    }
+
+    func retryLoad() {
+        loadError = nil
+        loadAllFromDisk()
     }
 
     private func saveArray<T: Codable>(_ items: [T], to fileName: String) {
@@ -388,6 +400,7 @@ final class HearthVault: ObservableObject {
         guard var badge = NestBadgeCatalog.allBadges.first(where: { $0.id == badgeId }) else { return }
         badge.unlockedAt = Date()
         sparkLedger.unlockedBadges.append(badge)
+        onBadgeUnlocked?(badge)
     }
 
     // MARK: - Preferences

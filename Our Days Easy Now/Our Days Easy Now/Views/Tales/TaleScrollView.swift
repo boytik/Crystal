@@ -70,6 +70,7 @@ struct TaleScrollView: View {
             // Filter bar (collapsible)
             if vm.showFilterBar {
                 filterBar
+                    .padding(.horizontal, 16)
                     .padding(.top, 10)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -89,23 +90,11 @@ struct TaleScrollView: View {
                 LazyVStack(spacing: 16, pinnedViews: .sectionHeaders) {
                     ForEach(vm.groupedTales) { group in
                         Section {
-                            VStack(spacing: 0) {
-                                ForEach(Array(group.moments.enumerated()), id: \.element.id) { index, row in
+                            VStack(spacing: 10) {
+                                ForEach(group.moments) { row in
                                     taleRow(row)
-
-                                    if index < group.moments.count - 1 {
-                                        Divider()
-                                            .background(NestPalette.moonThread.opacity(0.5))
-                                            .padding(.leading, 64)
-                                    }
                                 }
                             }
-                            .background(NestPalette.blanketCharcoal)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(NestPalette.moonThread, lineWidth: 0.5)
-                            )
                             .padding(.horizontal, 16)
                         } header: {
                             daySectionHeader(group)
@@ -128,7 +117,7 @@ struct TaleScrollView: View {
                 Button {
                     vm.setPeriod(period)
                 } label: {
-                    Text(period.rawValue)
+                    Text(NSLocalizedString(period.rawValue, comment: ""))
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(
                             vm.filter.period == period
@@ -173,7 +162,9 @@ struct TaleScrollView: View {
                         }
                         .padding(.horizontal, 16)
                     }
+                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity)
             }
 
             // Deed pills
@@ -192,7 +183,9 @@ struct TaleScrollView: View {
                         }
                         .padding(.horizontal, 16)
                     }
+                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity)
             }
 
             // Domain pills
@@ -230,7 +223,9 @@ struct TaleScrollView: View {
                 }
                 .padding(.horizontal, 16)
             }
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .background(NestPalette.cradleDark.opacity(0.8))
     }
@@ -295,7 +290,7 @@ struct TaleScrollView: View {
             HStack(spacing: 5) {
                 Image(systemName: domain.tinyIcon)
                     .font(.system(size: 10))
-                Text(domain.rawValue)
+                Text(NSLocalizedString(domain.rawValue, comment: ""))
                     .font(.caption.weight(.medium))
             }
             .foregroundColor(isSelected ? NestPalette.emberNight : NestPalette.duskWhisper)
@@ -354,49 +349,56 @@ struct TaleScrollView: View {
                 icon: "flame.fill",
                 value: "\(vm.totalCount)",
                 label: "moments",
-                color: NestPalette.hearthGold
+                color: NestPalette.hearthGold,
+                animated: true
             )
 
             Rectangle()
                 .fill(NestPalette.moonThread)
-                .frame(width: 1, height: 28)
+                .frame(width: 1, height: 40)
 
             statChip(
                 icon: "heart.fill",
                 value: "\(vm.gratitudeCount)",
                 label: "thanks",
-                color: NestPalette.bondSpark
+                color: NestPalette.bondSpark,
+                animated: true
             )
 
             Rectangle()
                 .fill(NestPalette.moonThread)
-                .frame(width: 1, height: 28)
+                .frame(width: 1, height: 40)
 
             statChip(
                 icon: "calendar",
                 value: vm.filter.period.rawValue,
                 label: "period",
-                color: NestPalette.harmonyMoss
+                color: NestPalette.harmonyMoss,
+                animated: true
             )
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
         .background(NestPalette.blanketCharcoal.opacity(0.5))
         .cornerRadius(10)
     }
 
-    private func statChip(icon: String, value: String, label: String, color: Color) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.caption2.bold())
-                .foregroundColor(color)
+    private func statChip(icon: String, value: String, label: String, color: Color, animated: Bool = false) -> some View {
+        HStack(spacing: 10) {
+            if animated {
+                TaleAnimatedStatIcon(systemName: icon, color: color)
+            } else {
+                Image(systemName: icon)
+                    .font(.title3.bold())
+                    .foregroundColor(color)
+            }
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(value)
-                    .font(.caption.bold())
+                    .font(.body.bold())
                     .foregroundColor(NestPalette.snowfall)
                 Text(label)
-                    .font(.system(size: 9))
-                    .foregroundColor(NestPalette.shadowMurmur)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(NestPalette.duskWhisper)
             }
         }
         .frame(maxWidth: .infinity)
@@ -433,7 +435,7 @@ struct TaleScrollView: View {
                 .font(.title3)
                 .frame(width: 40, height: 40)
                 .background(
-                    NestPalette.kinColor(at: row.kinColorSeed).opacity(0.15)
+                    NestPalette.kinColor(at: row.kinColorSeed).opacity(0.3)
                 )
                 .cornerRadius(20)
 
@@ -442,35 +444,35 @@ struct TaleScrollView: View {
                 HStack(spacing: 6) {
                     Text(row.kinName)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundColor(NestPalette.snowfall)
+                        .foregroundColor(NestPalette.emberNight)
 
                     Image(systemName: row.deedIcon)
                         .font(.caption2)
-                        .foregroundColor(NestPalette.hearthGold)
+                        .foregroundColor(NestPalette.emberNight)
 
                     Text(row.deedName)
                         .font(.subheadline)
-                        .foregroundColor(NestPalette.duskWhisper)
+                        .foregroundColor(NestPalette.emberNight.opacity(0.85))
                 }
 
                 HStack(spacing: 6) {
                     // Domain tag
                     HStack(spacing: 3) {
                         Image(systemName: row.deedDomain.tinyIcon)
-                            .font(.system(size: 8))
-                        Text(row.deedDomain.rawValue)
                             .font(.system(size: 9, weight: .medium))
+                        Text(NSLocalizedString(row.deedDomain.rawValue, comment: ""))
+                            .font(.system(size: 10, weight: .medium))
                     }
-                    .foregroundColor(NestPalette.shadowMurmur)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(NestPalette.moonThread.opacity(0.4))
-                    .cornerRadius(4)
+                    .foregroundColor(NestPalette.emberNight.opacity(0.7))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(NestPalette.emberNight.opacity(0.12))
+                    .cornerRadius(6)
 
                     if let note = row.tinyNote, !note.isEmpty {
                         Text(note)
                             .font(.caption2)
-                            .foregroundColor(NestPalette.shadowMurmur)
+                            .foregroundColor(NestPalette.emberNight.opacity(0.7))
                             .lineLimit(1)
                     }
                 }
@@ -482,17 +484,23 @@ struct TaleScrollView: View {
             VStack(alignment: .trailing, spacing: 4) {
                 Text(row.timeString)
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundColor(NestPalette.shadowMurmur)
+                    .foregroundColor(NestPalette.emberNight.opacity(0.65))
 
                 if row.hasGratitude {
                     Image(systemName: "heart.fill")
-                        .font(.system(size: 10))
+                        .font(.system(size: 12))
                         .foregroundColor(NestPalette.bondSpark)
                 }
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
+        .background(NestPalette.hearthGold)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(NestPalette.candleAmber.opacity(0.5), lineWidth: 0.5)
+        )
         .contentShape(Rectangle())
         .contextMenu {
             // Gratitude toggle
@@ -576,39 +584,54 @@ struct TaleScrollView: View {
     // MARK: - No Filter Results
 
     private var noFilterResults: some View {
-        VStack(spacing: 16) {
-            Spacer()
-
+        VStack(spacing: 0) {
+            // Same structure as readyContent to prevent layout shift
             periodPicker
                 .padding(.horizontal, 16)
+                .padding(.top, 8)
 
             if vm.showFilterBar {
                 filterBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
             }
 
-            Spacer()
+            searchBar
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
 
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 44))
-                .foregroundColor(NestPalette.moonThread)
+            statsStrip
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
 
-            Text("No moments match these filters")
-                .font(.subheadline.weight(.medium))
-                .foregroundColor(NestPalette.duskWhisper)
+            // Empty state (replaces ScrollView content)
+            VStack(spacing: 16) {
+                Spacer(minLength: 24)
 
-            Button {
-                vm.clearAllFilters()
-            } label: {
-                HStack {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text("Clear Filters")
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 44))
+                    .foregroundColor(NestPalette.moonThread)
+
+                Text("No moments match these filters")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(NestPalette.duskWhisper)
+
+                Button {
+                    vm.clearAllFilters()
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.counterclockwise")
+                        Text("Clear Filters")
+                    }
                 }
-            }
-            .buttonStyle(MoonlitButtonStyle())
+                .buttonStyle(MoonlitButtonStyle())
 
-            Spacer()
+                Spacer(minLength: 24)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 12)
         }
-        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Skeleton
@@ -638,5 +661,27 @@ struct TaleScrollView: View {
             Spacer()
         }
         .padding(.top, 12)
+    }
+}
+
+// MARK: - Animated Stat Icon (Tales)
+
+private struct TaleAnimatedStatIcon: View {
+    let systemName: String
+    let color: Color
+    @State private var scale: CGFloat = 1.0
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
+    var body: some View {
+        Image(systemName: systemName)
+            .font(.title3.bold())
+            .foregroundColor(color)
+            .scaleEffect(reduceMotion ? 1.0 : scale)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
+                    scale = 1.15
+                }
+            }
     }
 }
